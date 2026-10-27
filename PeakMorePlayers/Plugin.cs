@@ -77,13 +77,18 @@ namespace PeakMorePlayers
         {
             if (!_open) return;
             GUI.depth = 1;
+            float s = Ui.Scale;
+            var prevMatrix = GUI.matrix;
+            GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
             _window = GUILayout.Window(0x9EA7, _window, Draw, GUIContent.none, Ui.WindowStyle, GUILayout.Width(340));
+            GUI.matrix = prevMatrix;
         }
 
         private void Draw(int id)
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("Player cap", Ui.Title);
+            GUILayout.Space(6);
             GUILayout.Label(Name.Substring(Name.IndexOf('@')), Ui.Muted_);
             GUILayout.FlexibleSpace();
             if (Ui.Button("Close", width: 56)) SetOpen(false);

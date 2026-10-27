@@ -16,6 +16,12 @@ namespace PeakShared
         private static readonly Color ControlHover = new Color32(0x37, 0x40, 0x4D, 255);
         private static readonly Color Track = new Color32(0x33, 0x3A, 0x45, 255);
 
+        // The game renders IMGUI in linear colour space, which washes colours out unless they are converted.
+        internal static Color G(Color c) => QualitySettings.activeColorSpace == ColorSpace.Linear ? new Color(Mathf.GammaToLinearSpace(c.r), Mathf.GammaToLinearSpace(c.g), Mathf.GammaToLinearSpace(c.b), c.a) : c;
+
+        // Virtual-pixel scale so the UI is the same size on 1080p and 4K.
+        internal static float Scale => Mathf.Max(1f, Screen.height / 1080f);
+
         private static bool _ready;
         private static GUIStyle _window, _card, _round, _label, _muted, _title, _btnText, _field;
         private static GUIStyle _btnDraw;
@@ -36,7 +42,7 @@ namespace PeakShared
                     float cy = Mathf.Clamp(y, radius, size - 1 - radius);
                     float d = Vector2.Distance(new Vector2(x, y), new Vector2(cx, cy));
                     float a = Mathf.Clamp01(radius - d + 0.5f);
-                    t.SetPixel(x, y, new Color(c.r, c.g, c.b, c.a * a));
+                    t.SetPixel(x, y, G(new Color(c.r, c.g, c.b, c.a * a)));
                 }
             t.Apply();
             return t;
@@ -62,16 +68,16 @@ namespace PeakShared
             _card = Box(CardBg, 8, 10);
             _round = Box(Color.white, 6, 0);
             _field = Box(Track, 5, 6);
-            _field.normal.textColor = Text;
-            _field.focused.textColor = Text;
+            _field.normal.textColor = G(Text);
+            _field.focused.textColor = G(Text);
             _field.fontSize = 13;
             _field.alignment = TextAnchor.MiddleLeft;
             _field.clipping = TextClipping.Clip;
 
             _label = new GUIStyle { fontSize = 13, wordWrap = true, alignment = TextAnchor.MiddleLeft };
-            _label.normal.textColor = Text;
+            _label.normal.textColor = G(Text);
             _muted = new GUIStyle(_label) { fontSize = 12 };
-            _muted.normal.textColor = Muted;
+            _muted.normal.textColor = G(Muted);
             _title = new GUIStyle(_label) { fontSize = 15, fontStyle = FontStyle.Bold };
             _btnText = new GUIStyle(_label) { alignment = TextAnchor.MiddleCenter, wordWrap = false, clipping = TextClipping.Clip };
             _btnDraw = new GUIStyle(_btnText);
@@ -81,7 +87,7 @@ namespace PeakShared
         private static void Fill(Rect r, Color c)
         {
             var prev = GUI.color;
-            GUI.color = prev * c;
+            GUI.color = prev * G(c);
             _round.Draw(r, false, false, false, false);
             GUI.color = prev;
         }
@@ -101,7 +107,7 @@ namespace PeakShared
             Init();
             GUILayout.Space(4);
             var s = new GUIStyle(_muted) { fontStyle = FontStyle.Bold };
-            s.normal.textColor = Accent;
+            s.normal.textColor = G(Accent);
             GUILayout.Label(text.ToUpperInvariant(), s);
         }
 
@@ -115,7 +121,7 @@ namespace PeakShared
             {
                 Fill(r, selected ? Accent : Hover(r) ? ControlHover : Control);
                 var st = new GUIStyle(_btnText) { fontStyle = selected ? FontStyle.Bold : FontStyle.Normal };
-                st.normal.textColor = selected ? new Color32(0x14, 0x17, 0x1C, 255) : Text;
+                st.normal.textColor = G(selected ? new Color32(0x14, 0x17, 0x1C, 255) : Text);
                 st.Draw(r, text, false, false, false, false);
             }
             return GUI.Button(r, GUIContent.none, GUIStyle.none);
@@ -135,7 +141,7 @@ namespace PeakShared
                 if (!enabled) bg = Color.Lerp(bg, WindowBg, 0.55f);
                 Fill(r, bg);
                 var st = _btnDraw;
-                st.normal.textColor = !enabled ? Muted : kind == Kind.Normal ? Text : new Color32(0x14, 0x17, 0x1C, 255);
+                st.normal.textColor = G(!enabled ? Muted : kind == Kind.Normal ? Text : new Color32(0x14, 0x17, 0x1C, 255));
                 st.Draw(r, text, false, false, false, false);
             }
             return enabled && GUI.Button(r, GUIContent.none, GUIStyle.none);
@@ -163,7 +169,7 @@ namespace PeakShared
             GUILayout.Label(text, _label);
             GUILayout.FlexibleSpace();
             var right = new GUIStyle(_label) { alignment = TextAnchor.MiddleRight, fixedWidth = 60 };
-            right.normal.textColor = Accent;
+            right.normal.textColor = G(Accent);
             GUILayout.Label(value.ToString(fmt), right);
             GUILayout.EndHorizontal();
 
@@ -217,7 +223,7 @@ namespace PeakShared
             if (Event.current.type == EventType.Repaint)
             {
                 Fill(r, new Color(color.r, color.g, color.b, 0.22f));
-                st.normal.textColor = color;
+                st.normal.textColor = G(color);
                 st.Draw(r, text, false, false, false, false);
             }
         }

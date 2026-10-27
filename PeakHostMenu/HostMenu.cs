@@ -102,9 +102,13 @@ namespace PeakHostMenu
             }
             if (!_open) return;
             GUI.depth = 0;
+            float s = Ui.Scale;
+            var prevMatrix = GUI.matrix;
+            GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
             _window = GUILayout.Window(0x9EA6, _window, Draw, GUIContent.none, Ui.WindowStyle, GUILayout.Width(600));
-            _window.x = Mathf.Clamp(_window.x, 0, Screen.width - 120);
-            _window.y = Mathf.Clamp(_window.y, 0, Screen.height - 60);
+            _window.x = Mathf.Clamp(_window.x, 0, Screen.width / s - 120);
+            _window.y = Mathf.Clamp(_window.y, 0, Screen.height / s - 60);
+            GUI.matrix = prevMatrix;
         }
 
         private static GUIStyle OverlayStyle(Color c) =>
@@ -170,6 +174,7 @@ namespace PeakHostMenu
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("PEAK Host Menu", Ui.Title);
+            GUILayout.Space(6);
             GUILayout.Label($"{Plugin.Author}  v{Plugin.Version}", Ui.Muted_);
             GUILayout.FlexibleSpace();
             if (!PhotonNetwork.InRoom) Ui.Pill("OFFLINE", Ui.Muted);
