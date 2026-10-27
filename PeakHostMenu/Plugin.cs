@@ -11,7 +11,7 @@ namespace PeakHostMenu
     {
         public const string Guid = "au.leybourne.peakhostmenu";
         public const string Name = "PEAK Host Menu";
-        public const string Version = "0.2.0";
+        public const string Version = "0.3.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -25,6 +25,10 @@ namespace PeakHostMenu
         internal ConfigEntry<bool> Fly;
         internal ConfigEntry<float> FlySpeed;
         internal ConfigEntry<bool> Esp;
+        internal ConfigEntry<bool> UnlimitedUses;
+        internal ConfigEntry<bool> NoWeight;
+        internal ConfigEntry<bool> NoRagdoll;
+        internal ConfigEntry<bool> TeleportToPing;
 
         private Harmony _harmony;
 
@@ -42,6 +46,10 @@ namespace PeakHostMenu
             Fly = Config.Bind("Toggles", "Fly", false, "WASD plus Space and Left Ctrl to fly.");
             FlySpeed = Config.Bind("Toggles", "FlySpeed", 12f, new ConfigDescription("Fly speed.", new AcceptableValueRange<float>(2f, 60f)));
             Esp = Config.Bind("Toggles", "PlayerEsp", false, "Draw names and distance over every player.");
+            UnlimitedUses = Config.Bind("Toggles", "UnlimitedItemUses", false, "Items never run out of uses.");
+            NoWeight = Config.Bind("Toggles", "NoWeight", false, "Carrying weight never slows you.");
+            NoRagdoll = Config.Bind("Toggles", "NoRagdoll", false, "Stay upright instead of going limp.");
+            TeleportToPing = Config.Bind("Toggles", "TeleportToPing", false, "Pinging a spot teleports you there.");
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();

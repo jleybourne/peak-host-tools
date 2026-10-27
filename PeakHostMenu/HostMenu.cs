@@ -19,6 +19,10 @@ namespace PeakHostMenu
         private float _spawnCount = 1;
         private bool _toHand;
         private Character _itemTarget;
+        private int _statusIdx;
+        private float _statusAmount = 0.25f;
+        private static readonly CharacterAfflictions.STATUSTYPE[] Statuses =
+            (CharacterAfflictions.STATUSTYPE[])Enum.GetValues(typeof(CharacterAfflictions.STATUSTYPE));
 
         private CursorLockMode _prevLock;
         private bool _prevVisible;
@@ -161,6 +165,9 @@ namespace PeakHostMenu
             cfg.Stamina.Value = Ui.Switch("Infinite stamina", cfg.Stamina.Value);
             cfg.NoAfflictions.Value = Ui.Switch("No afflictions", cfg.NoAfflictions.Value);
             cfg.NoFallDamage.Value = Ui.Switch("No fall damage", cfg.NoFallDamage.Value);
+            cfg.NoWeight.Value = Ui.Switch("No carry weight", cfg.NoWeight.Value);
+            cfg.NoRagdoll.Value = Ui.Switch("No ragdoll (stay upright)", cfg.NoRagdoll.Value);
+            cfg.UnlimitedUses.Value = Ui.Switch("Unlimited item uses", cfg.UnlimitedUses.Value);
             Ui.EndCard();
 
             Ui.Heading("Movement");
@@ -198,6 +205,18 @@ namespace PeakHostMenu
             GUILayout.EndHorizontal();
             Ui.EndCard();
 
+            Ui.Heading("Status tool");
+            Ui.BeginCard();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Status", Ui.Title, GUILayout.Width(60));
+            if (Ui.Button("<", width: 30)) _statusIdx = (_statusIdx + Statuses.Length - 1) % Statuses.Length;
+            GUILayout.Label(Statuses[_statusIdx].ToString(), Ui.Title, GUILayout.Width(90));
+            if (Ui.Button(">", width: 30)) _statusIdx = (_statusIdx + 1) % Statuses.Length;
+            GUILayout.EndHorizontal();
+            _statusAmount = Ui.Slider("Amount", _statusAmount, 0.05f, 1f, "0.00");
+            if (Ui.Button("Apply to everyone", enabled: true)) Features.ForAll(p => Features.GiveStatus(p, Statuses[_statusIdx], _statusAmount), true);
+            Ui.EndCard();
+
             Ui.Heading("Players");
             foreach (var c in Features.Players.ToList())
             {
@@ -223,6 +242,10 @@ namespace PeakHostMenu
                 if (Ui.Button("Make host", enabled: Features.IsHost && !mine)) Features.MakeHost(c);
                 if (Ui.Button("Kick", Ui.Kind.Danger, Features.IsHost && !mine)) Features.Kick(c);
                 GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                if (Ui.Button($"Give {Statuses[_statusIdx]}")) Features.GiveStatus(c, Statuses[_statusIdx], _statusAmount);
+                if (Ui.Button("Scoutmaster", enabled: Features.IsHost)) Features.SpawnScoutmaster(c);
+                GUILayout.EndHorizontal();
                 Ui.EndCard();
             }
         }
@@ -244,6 +267,16 @@ namespace PeakHostMenu
                 if (Ui.Button("Go", Ui.Kind.Accent, saved, 60)) Features.GoToWaypoint(i);
                 GUILayout.EndHorizontal();
             }
+            Ui.EndCard();
+
+            Ui.Heading("Jump to biome");
+            Ui.BeginCard();
+            GUILayout.BeginHorizontal();
+            foreach (Segment s in Enum.GetValues(typeof(Segment)))
+                if (Ui.Button(s.ToString())) Features.JumpToSegment(s);
+            GUILayout.EndHorizontal();
+            Plugin.Instance.TeleportToPing.Value = Ui.Switch("Teleport to where I ping", Plugin.Instance.TeleportToPing.Value);
+            if (Ui.Button("Open all luggage", enabled: Features.IsHost)) Features.OpenAllLuggage();
             Ui.EndCard();
 
             Ui.Heading("Campfires");

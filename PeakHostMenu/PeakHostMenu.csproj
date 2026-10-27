@@ -24,6 +24,7 @@
         <Reference Include="$(ManagedDir)UnityEngine.CoreModule.dll" Private="false" />
         <Reference Include="$(ManagedDir)UnityEngine.IMGUIModule.dll" Private="false" />
         <Reference Include="$(ManagedDir)UnityEngine.PhysicsModule.dll" Private="false" />
+        <Reference Include="$(ManagedDir)Zorro.Core.Runtime.dll" Private="false" />
         <Reference Include="$(ManagedDir)UnityEngine.TextRenderingModule.dll" Private="false" />
         <Reference Include="$(ManagedDir)Unity.InputSystem.dll" Private="false" />
         <Reference Include="$(ManagedDir)PhotonUnityNetworking.dll" Private="false" />

@@ -53,7 +53,8 @@ namespace PeakHostMenu
                 _godWasOn = cfg.God.Value;
             });
 
-            if (cfg.Stamina.Value) Safe("stamina", Character.GainFullStamina);
+            Safe("stamina", () => me.infiniteStam = cfg.Stamina.Value);
+            Safe("status lock", () => Traverse.Create(me).Property("statusesLocked").SetValue(cfg.NoAfflictions.Value));
 
             if (cfg.NoAfflictions.Value && Time.time >= _nextClear)
             {
@@ -88,6 +89,8 @@ namespace PeakHostMenu
             if (kb.spaceKey.isPressed) dir += Vector3.up;
             if (kb.leftCtrlKey.isPressed) dir += Vector3.down;
 
+            me.data.sinceGrounded = 0f;
+            Traverse.Create(me.data).Field("isGrounded").SetValue(true);
             Vector3 vel = dir.sqrMagnitude > 0.01f ? dir.normalized * Plugin.Instance.FlySpeed.Value : Vector3.zero;
             foreach (var part in me.refs.ragdoll.partList)
             {
@@ -113,8 +116,61 @@ namespace PeakHostMenu
         internal static void Kick(Character c)
         {
             if (!IsHost || c == null || c.photonView.IsMine) return;
-            PhotonNetwork.CloseConnection(c.photonView.Owner);
+            // Ask the game's own kick first so the player gets a clean exit, then cut the connection if they're still here.
+            var owner = c.photonView.Owner;
+            Safe("kick", () => c.player.photonView.RPC("RPC_GetKicked", RpcTarget.All));
+            Instance.StartCoroutine(CloseLater(owner));
         }
+
+        private static System.Collections.IEnumerator CloseLater(Photon.Realtime.Player owner)
+        {
+            yield return new WaitForSeconds(1.5f);
+            if (PhotonNetwork.InRoom && PhotonNetwork.PlayerList.Contains(owner)) PhotonNetwork.CloseConnection(owner);
+        }
+
+        // Drop a point to the ground so revived or warped players don't land inside rock.
+        internal static Vector3 SafePosition(Vector3 from)
+        {
+            if (Physics.Raycast(from + Vector3.up * 3f, Vector3.down, out var hit, 50f)) return hit.point + Vector3.up * 1.5f;
+            return from + Vector3.up;
+        }
+
+        // ---- Host extras ---------------------------------------------------------------------
+
+        internal static void GiveStatus(Character c, CharacterAfflictions.STATUSTYPE type, float amount)
+        {
+            Safe("give status", () =>
+            {
+                var aff = c.refs.afflictions;
+                if (c.photonView.IsMine) { aff.AddStatus(type, amount, false, true, true, false, false); return; }
+                var arr = new float[CharacterAfflictions.NumStatusTypes];
+                for (int i = 0; i < arr.Length; i++) arr[i] = aff.GetCurrentStatus((CharacterAfflictions.STATUSTYPE)i);
+                arr[(int)type] = Mathf.Clamp01(arr[(int)type] + amount);
+                aff.photonView.RPC("RPC_ApplyStatusesFromFloatArray", RpcTarget.All, (object)arr);
+            });
+        }
+
+        internal static void SpawnScoutmaster(Character target)
+        {
+            if (!IsHost || target == null) return;
+            Safe("scoutmaster", () =>
+            {
+                var go = PhotonNetwork.InstantiateRoomObject("Character_Scoutmaster", target.Center + Vector3.up * 2f, Quaternion.identity);
+                var sm = go.GetComponent<Scoutmaster>();
+                if (sm != null) Traverse.Create(sm).Method("SetCurrentTarget", new object[] { target, 60f }).GetValue();
+            });
+        }
+
+        internal static void OpenAllLuggage()
+        {
+            Safe("open luggage", () =>
+            {
+                foreach (var l in Luggage.ALL_LUGGAGE.ToList())
+                    if (l != null) l.photonView.RPC("OpenLuggageRPC", RpcTarget.All, true);
+            });
+        }
+
+        internal static void JumpToSegment(Segment s) => Safe("jump to segment", () => MapHandler.JumpToSegment(s));
 
         internal static void MakeHost(Character c)
         {
@@ -152,8 +208,8 @@ namespace PeakHostMenu
                 if (c.photonView.IsMine) Traverse.Create(c).Method("ReviveCharacter", new object[] { true }).GetValue();
                 else
                 {
-                    int segment = (int)c.data.lastRevivedSegment;
-                    c.photonView.RPC("RPCA_ReviveAtPosition", RpcTarget.All, (Me ?? c).Center + Vector3.up, true, segment);
+                    Vector3 spot = SafePosition((Me ?? c).Center);
+                    c.photonView.RPC("RPCA_ReviveAtPosition", RpcTarget.All, spot, true, -1);
                 }
             });
         }

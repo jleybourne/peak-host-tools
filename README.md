@@ -14,9 +14,9 @@ Large lobbies are not fully handled yet: end screen, kiosk, campfire marshmallow
 In-game window, toggled with F3 (rebindable in `BepInEx/config/au.leybourne.peakhostmenu.cfg`).
 
 - **Lobby:** apply a player cap to the current room, lock or unlock joins, player ESP (names and distance on screen).
-- **Me:** god mode, infinite stamina, no afflictions, no fall damage, fly (F4, WASD + Space/Left Ctrl), speed and jump multipliers, heal, revive, die. Toggles are remembered in the config file.
-- **Players:** go to, bring, revive, heal, make host, kick, stamina and affliction readout, plus bring/revive/heal everyone.
-- **Teleport:** three saved waypoints, jump to any campfire, bring everyone to a campfire.
+- **Me:** god mode, infinite stamina, no afflictions, no fall damage, no carry weight, no ragdoll, unlimited item uses, fly (F4, WASD + Space/Left Ctrl), speed and jump multipliers, heal, revive, die. Toggles are remembered in the config file.
+- **Players:** go to, bring, revive, heal, make host, kick, stamina and affliction readout, give any status, spawn the Scoutmaster on someone, plus bring/revive/heal/status for everyone.
+- **Teleport:** three saved waypoints, jump to a biome, teleport to where you ping, open all luggage, jump to any campfire, bring everyone to a campfire.
 - **Items:** filterable list of every item. Spawn 1 to 10 in front of a chosen player, or put one straight into their hand using the game's own give call.
 
 Revive, heal, warp and item spawning for other players use network calls inferred from the game's method names and are not yet tested in-game.
