@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AssemblyName>PeakHostMenu</AssemblyName>
+        <RootNamespace>PeakHostMenu</RootNamespace>
+        <Version>0.1.0</Version>
+        <LangVersion>latest</LangVersion>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <NoWarn>CS0618;CS8632</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GameDir Condition="'$(GameDir)' == ''">D:\Games\Steam\steamapps\common\PEAK\</GameDir>
+        <ManagedDir>$(GameDir)PEAK_Data\Managed\</ManagedDir>
+        <BepInExDir>$(GameDir)BepInEx\core\</BepInExDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Reference Include="$(BepInExDir)BepInEx.dll" Private="false" />
+        <Reference Include="$(BepInExDir)0Harmony.dll" Private="false" />
+        <Reference Include="$(ManagedDir)Assembly-CSharp.dll" Private="false" />
+        <Reference Include="$(ManagedDir)UnityEngine.dll" Private="false" />
+        <Reference Include="$(ManagedDir)UnityEngine.CoreModule.dll" Private="false" />
+        <Reference Include="$(ManagedDir)UnityEngine.IMGUIModule.dll" Private="false" />
+        <Reference Include="$(ManagedDir)UnityEngine.PhysicsModule.dll" Private="false" />
+        <Reference Include="$(ManagedDir)Unity.InputSystem.dll" Private="false" />
+        <Reference Include="$(ManagedDir)PhotonUnityNetworking.dll" Private="false" />
+        <Reference Include="$(ManagedDir)PhotonRealtime.dll" Private="false" />
+        <Reference Include="$(ManagedDir)Photon3Unity3D.dll" Private="false" />
+    </ItemGroup>
+
+    <Target Name="Deploy" AfterTargets="Build" Condition="Exists('$(GameDir)BepInEx\plugins')">
+        <Copy SourceFiles="$(OutputPath)PeakHostMenu.dll" DestinationFolder="$(GameDir)BepInEx\plugins\PeakHostMenu\" />
+    </Target>
+
+</Project>
