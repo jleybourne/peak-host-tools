@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using Photon.Pun;
-using Photon.Realtime;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace PeakHostMenu
 {
@@ -14,15 +14,14 @@ namespace PeakHostMenu
     {
         internal static Features Instance;
 
-        internal bool GodMode;
-        internal bool InfiniteStamina;
-        internal bool NoAfflictions;
         internal float SpeedMultiplier = 1f;
         internal float JumpMultiplier = 1f;
+        internal readonly Vector3?[] Waypoints = new Vector3?[3];
 
         private float _baseMove = -1f;
         private float _baseJump = -1f;
         private float _nextClear;
+        private bool _godWasOn;
 
         private void Awake() => Instance = this;
 
@@ -39,20 +38,24 @@ namespace PeakHostMenu
 
         private void Update()
         {
+            var kb = Keyboard.current;
+            var cfg = Plugin.Instance;
+            if (kb != null && kb[cfg.FlyKey.Value].wasPressedThisFrame) cfg.Fly.Value = !cfg.Fly.Value;
+
             var me = Me;
             if (me == null) return;
 
             Safe("god mode", () =>
             {
                 var t = Traverse.Create(me.data).Field("isInvincible");
-                if (GodMode) t.SetValue(true);
-                else if (t.GetValue<bool>() && _godWasOn) t.SetValue(false);
-                _godWasOn = GodMode;
+                if (cfg.God.Value) t.SetValue(true);
+                else if (_godWasOn) t.SetValue(false);
+                _godWasOn = cfg.God.Value;
             });
 
-            if (InfiniteStamina) Safe("stamina", Character.GainFullStamina);
+            if (cfg.Stamina.Value) Safe("stamina", Character.GainFullStamina);
 
-            if (NoAfflictions && Time.time >= _nextClear)
+            if (cfg.NoAfflictions.Value && Time.time >= _nextClear)
             {
                 _nextClear = Time.time + 0.25f;
                 Safe("clear afflictions", () => me.refs.afflictions.ClearAllStatus(true, true));
@@ -65,9 +68,33 @@ namespace PeakHostMenu
                 mv.movementModifier = _baseMove * SpeedMultiplier;
                 mv.jumpImpulse = _baseJump * JumpMultiplier;
             });
+
+            if (cfg.Fly.Value) Safe("fly", () => DoFly(me, kb));
         }
 
-        private bool _godWasOn;
+        // Fly by driving every body part's velocity, so the whole ragdoll moves together.
+        private static void DoFly(Character me, Keyboard kb)
+        {
+            if (kb == null) return;
+            var cam = Camera.main;
+            Vector3 fwd = cam != null ? cam.transform.forward : me.data.lookDirection;
+            Vector3 right = cam != null ? cam.transform.right : me.data.lookDirection_Right;
+
+            Vector3 dir = Vector3.zero;
+            if (kb.wKey.isPressed) dir += fwd;
+            if (kb.sKey.isPressed) dir -= fwd;
+            if (kb.dKey.isPressed) dir += right;
+            if (kb.aKey.isPressed) dir -= right;
+            if (kb.spaceKey.isPressed) dir += Vector3.up;
+            if (kb.leftCtrlKey.isPressed) dir += Vector3.down;
+
+            Vector3 vel = dir.sqrMagnitude > 0.01f ? dir.normalized * Plugin.Instance.FlySpeed.Value : Vector3.zero;
+            foreach (var part in me.refs.ragdoll.partList)
+            {
+                var rig = Traverse.Create(part).Field("rig").GetValue<Rigidbody>();
+                if (rig != null) rig.linearVelocity = vel;
+            }
+        }
 
         // ---- Lobby ---------------------------------------------------------------------------
 
@@ -157,6 +184,39 @@ namespace PeakHostMenu
                 if (includeMe || c != Me) action(c);
         }
 
+        // One-line health readout for the player list. Statuses are synced, so this works for anyone.
+        internal static string Condition(Character c)
+        {
+            try
+            {
+                float afflicted = c.refs.afflictions.statusSum;
+                return $"stamina {c.data.currentStamina:0.00}, afflictions {afflicted:0.00}";
+            }
+            catch { return ""; }
+        }
+
+        // ---- Teleport ------------------------------------------------------------------------
+
+        internal static List<Campfire> Campfires()
+        {
+            var list = new List<Campfire>();
+            Safe("campfires", () =>
+                list = UnityEngine.Object.FindObjectsByType<Campfire>(FindObjectsSortMode.None)
+                    .OrderBy(c => (int)c.advanceToSegment).ToList());
+            return list;
+        }
+
+        internal static void SaveWaypoint(int slot)
+        {
+            if (Me != null) Instance.Waypoints[slot] = Me.Center;
+        }
+
+        internal static void GoToWaypoint(int slot)
+        {
+            var w = Instance.Waypoints[slot];
+            if (w.HasValue && Me != null) Warp(Me, w.Value + Vector3.up);
+        }
+
         // ---- Items ---------------------------------------------------------------------------
 
         private static List<Item> _items;
@@ -176,14 +236,17 @@ namespace PeakHostMenu
             return _items ?? new List<Item>();
         }
 
-        // Spawns a networked item just in front of a player.
-        internal static void SpawnItem(Item item, Character at)
+        // Spawns networked items just in front of a player.
+        internal static void SpawnItem(Item item, Character at, int count = 1)
         {
             if (item == null || at == null) return;
             Safe("spawn item", () =>
             {
-                var pos = at.Center + Vector3.up * 0.5f + at.data.lookDirection_Flat * 1.2f;
-                PhotonNetwork.Instantiate("0_Items/" + item.name, pos, Quaternion.identity);
+                for (int i = 0; i < count; i++)
+                {
+                    var pos = at.Center + Vector3.up * (0.5f + 0.35f * i) + at.data.lookDirection_Flat * 1.2f;
+                    PhotonNetwork.Instantiate("0_Items/" + item.name, pos, Quaternion.identity);
+                }
             });
         }
 
