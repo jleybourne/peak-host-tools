@@ -42,6 +42,8 @@ namespace PeakProbe
             if (kb != null && kb[Key.F6].wasPressedThisFrame) Dump.Write();
         }
 
+        private static readonly string[] Noise = { "SyncAfflictionsRPC", "SyncStatusesRPC", "SetKinematicRPC", "RPCA_SyncTime", "RPC_SyncTime", "RPCA_SyncFog", "SyncThornsRPC", "RPCA_SyncTornado", "RPCA_SyncAnim" };
+
         internal static void Rpc(string line)
         {
             try { File.AppendAllText(_rpcLog, $"[{Time.realtimeSinceStartup:0.00}] {line}\n"); } catch { }

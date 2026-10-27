@@ -181,12 +181,18 @@ namespace PeakHostMenu
         internal static void SpawnScoutmaster(Character target)
         {
             if (!IsHost || target == null) return;
-            Safe("scoutmaster", () =>
-            {
-                var go = PhotonNetwork.InstantiateRoomObject("Character_Scoutmaster", target.Center + Vector3.up * 2f, Quaternion.identity);
-                var sm = go.GetComponent<Scoutmaster>();
-                if (sm != null) Traverse.Create(sm).Method("SetCurrentTarget", new object[] { target, 60f }).GetValue();
-            });
+            Instance.StartCoroutine(SpawnScoutmasterRoutine(target));
+        }
+
+        // Give the spawned Scoutmaster a moment to start, then aim it with the game's own target call.
+        private static System.Collections.IEnumerator SpawnScoutmasterRoutine(Character target)
+        {
+            GameObject go = null;
+            Safe("scoutmaster spawn", () => go = PhotonNetwork.InstantiateRoomObject("Character_Scoutmaster", target.Center + Vector3.up * 2f, Quaternion.identity));
+            if (go == null) yield break;
+            yield return new WaitForSeconds(1f);
+            if (go == null || target == null) yield break;
+            Safe("scoutmaster target", () => go.GetComponent<PhotonView>().RPC("RPCA_SetCurrentTarget", RpcTarget.All, target.photonView.ViewID, 60f));
         }
 
         internal static void OpenAllLuggage()
@@ -198,7 +204,11 @@ namespace PeakHostMenu
             });
         }
 
-        internal static void JumpToSegment(Segment s) => Safe("jump to segment", () => MapHandler.JumpToSegment(s));
+        internal static void JumpToSegment(Segment s) => Safe("jump to segment", () =>
+        {
+            if (UnityEngine.Object.FindFirstObjectByType<MapHandler>() == null) { Plugin.Log.LogWarning("Jump to biome only works during a run, not in the airport."); return; }
+            MapHandler.JumpToSegment(s);
+        });
 
         internal static void MakeHost(Character c)
         {
@@ -357,7 +367,13 @@ namespace PeakHostMenu
         internal static void Safe(string what, Action a)
         {
             try { a(); }
-            catch (Exception e) { Plugin.Log.LogWarning($"{what} failed: {e.GetType().Name}: {e.Message}"); }
+            catch (Exception e)
+            {
+                // Reflection and RPC calls wrap the real error, so report the inner one with where it happened.
+                var inner = e is System.Reflection.TargetInvocationException && e.InnerException != null ? e.InnerException : e;
+                var stack = (inner.StackTrace ?? "").Split('\n').Take(3).Select(l => l.Trim());
+                Plugin.Log.LogWarning($"{what} failed: {inner.GetType().Name}: {inner.Message} | {string.Join(" <- ", stack)}");
+            }
         }
     }
 }

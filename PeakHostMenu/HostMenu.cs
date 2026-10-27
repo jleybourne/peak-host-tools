@@ -393,7 +393,7 @@ namespace PeakHostMenu
 
             Ui.Heading("Trouble");
             Ui.BeginCard();
-            Row(PerTarget("Eruption", HostActions.Eruption, Ui.Kind.Danger),
+            Row(PerTarget("Eruption (volcano areas only)", HostActions.Eruption, Ui.Kind.Danger),
                 PerTarget("Coconut on head", c => HostActions.DropProp(c, "Item_Coconut", 8f)));
             Row(PerTarget("Banana peel", c => HostActions.DropProp(c, "Berrynana Peel Yellow", 0.5f)),
                 PerTarget("Beehive", c => HostActions.DropProp(c, "Beehive", 2f)),
