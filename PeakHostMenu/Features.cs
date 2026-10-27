@@ -195,6 +195,26 @@ namespace PeakHostMenu
             catch { return ""; }
         }
 
+
+        // Stamina and affliction load as 0..1 fractions for the player-list bars.
+        internal static float StaminaFrac(Character c)
+        {
+            try { return Mathf.Clamp01(c.data.currentStamina / Mathf.Max(0.01f, c.GetMaxStamina())); }
+            catch { return 0f; }
+        }
+
+        internal static float AfflictedFrac(Character c)
+        {
+            try { return Mathf.Clamp01(c.refs.afflictions.statusSum); }
+            catch { return 0f; }
+        }
+
+        // Uses the game's own "spawn item in hand" call, which the host runs for that character.
+        internal static void GiveToHand(Item item, Character c)
+        {
+            if (item == null || c == null) return;
+            Safe("give item", () => c.refs.items.photonView.RPC("RPC_SpawnItemInHandMaster", RpcTarget.MasterClient, item.name));
+        }
         // ---- Teleport ------------------------------------------------------------------------
 
         internal static List<Campfire> Campfires()

@@ -17,7 +17,7 @@ In-game window, toggled with F3 (rebindable in `BepInEx/config/au.leybourne.peak
 - **Me:** god mode, infinite stamina, no afflictions, no fall damage, fly (F4, WASD + Space/Left Ctrl), speed and jump multipliers, heal, revive, die. Toggles are remembered in the config file.
 - **Players:** go to, bring, revive, heal, make host, kick, stamina and affliction readout, plus bring/revive/heal everyone.
 - **Teleport:** three saved waypoints, jump to any campfire, bring everyone to a campfire.
-- **Items:** filterable list of every item, spawn 1 to 10 in front of a chosen player.
+- **Items:** filterable list of every item. Spawn 1 to 10 in front of a chosen player, or put one straight into their hand using the game's own give call.
 
 Revive, heal, warp and item spawning for other players use network calls inferred from the game's method names and are not yet tested in-game.
 
