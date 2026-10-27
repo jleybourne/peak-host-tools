@@ -43,6 +43,7 @@ namespace PeakHostMenu
         internal ConfigEntry<bool> TeleportToPing;
         internal ConfigEntry<bool> ShowCoords;
         internal ConfigEntry<bool> LuggageEsp;
+        internal ConfigEntry<float> UiScale;
 
         // One immunity switch per status, so you can be immune to cold but still get hungry.
         internal readonly Dictionary<CharacterAfflictions.STATUSTYPE, ConfigEntry<bool>> Immune =
@@ -71,6 +72,7 @@ namespace PeakHostMenu
             Log = Logger;
 
             MenuKey = Config.Bind("Keys", "MenuKey", Key.F3, "Key that opens and closes the host menu.");
+            UiScale = Config.Bind("Menu", "UiScale", 1f, new ConfigDescription("Extra size multiplier for the menu. It already scales with screen height.", new AcceptableValueRange<float>(0.5f, 2f)));
             FlyKey = Config.Bind("Keys", "FlyKey", Key.F4, "Key that toggles fly mode.");
 
             God = Switch("GodMode", "God mode", "No damage.");

@@ -19,8 +19,17 @@ namespace PeakShared
         // The game renders IMGUI in linear colour space, which washes colours out unless they are converted.
         internal static Color G(Color c) => QualitySettings.activeColorSpace == ColorSpace.Linear ? new Color(Mathf.GammaToLinearSpace(c.r), Mathf.GammaToLinearSpace(c.g), Mathf.GammaToLinearSpace(c.b), c.a) : c;
 
-        // Virtual-pixel scale so the UI is the same size on 1080p and 4K.
-        internal static float Scale => Mathf.Max(1f, Screen.height / 1080f);
+        // User-chosen multiplier on top of the automatic scale (set by each mod from its config).
+        internal static float UserScale = 1f;
+
+        // Scale so a window of w x h virtual pixels is the same physical size on any resolution (1080p is 1.0),
+        // times the user multiplier, but never so big that it spills off the screen.
+        internal static float ScaleFor(float w, float h)
+        {
+            float s = Screen.height / 1080f * UserScale;
+            s = Mathf.Min(s, (Screen.width - 20f) / w, (Screen.height - 20f) / h);
+            return Mathf.Clamp(s, 0.4f, 3f);
+        }
 
         private static bool _ready;
         private static GUIStyle _window, _card, _round, _label, _muted, _title, _btnText, _field;

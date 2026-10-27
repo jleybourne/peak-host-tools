@@ -24,6 +24,7 @@ namespace PeakHostMenu
         private int _tab;
         private Rect _window = new Rect(40, 40, 600, 640);
         private Vector2 _scroll;
+        private float _scrollHeight = 540f;
 
         private string _itemFilter = "";
         private int _maxPlayersDraft;
@@ -102,7 +103,9 @@ namespace PeakHostMenu
             }
             if (!_open) return;
             GUI.depth = 0;
-            float s = Ui.Scale;
+            Ui.UserScale = Plugin.Instance.UiScale.Value;
+            float s = Ui.ScaleFor(600f, 700f);
+            _scrollHeight = Mathf.Clamp(Screen.height / s - 150f, 200f, 540f);
             var prevMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
             _window = GUILayout.Window(0x9EA6, _window, Draw, GUIContent.none, Ui.WindowStyle, GUILayout.Width(600));
@@ -154,7 +157,7 @@ namespace PeakHostMenu
             GUILayout.EndHorizontal();
             GUILayout.Space(4);
 
-            _scroll = GUILayout.BeginScrollView(_scroll, false, false, GUIStyle.none, GUIStyle.none, GUIStyle.none, GUILayout.Height(540));
+            _scroll = GUILayout.BeginScrollView(_scroll, false, false, GUIStyle.none, GUIStyle.none, GUIStyle.none, GUILayout.Height(_scrollHeight));
             switch (_tab)
             {
                 case 0: DrawLobby(); break;
@@ -227,6 +230,8 @@ namespace PeakHostMenu
             Ui.BeginCard();
             Plugin.Instance.Esp.Value = Ui.Switch("Player ESP (names and distance)", Plugin.Instance.Esp.Value);
             Plugin.Instance.ShowCoords.Value = Ui.Switch("Coordinates overlay", Plugin.Instance.ShowCoords.Value);
+            Plugin.Instance.UiScale.Value = Mathf.Round(Ui.Slider("UI size", Plugin.Instance.UiScale.Value, 0.5f, 2f, "0.0x") * 10f) / 10f;
+            Ui.Hint("Scales with your screen automatically. This is an extra multiplier.");
             Ui.EndCard();
         }
 

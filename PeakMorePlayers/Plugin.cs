@@ -21,6 +21,7 @@ namespace PeakMorePlayers
 
         internal ConfigEntry<int> MaxPlayers;
         internal ConfigEntry<Key> MenuKey;
+        internal ConfigEntry<float> UiScale;
 
         private Harmony _harmony;
         private bool _open;
@@ -38,6 +39,7 @@ namespace PeakMorePlayers
                 new ConfigDescription("Player cap for lobbies you host. Only the host needs this mod.",
                     new AcceptableValueRange<int>(1, 30)));
             MenuKey = Config.Bind("Keys", "MenuKey", Key.F2, "Key that opens the player cap window.");
+            UiScale = Config.Bind("Window", "UiScale", 1f, new ConfigDescription("Extra size multiplier for the window. It already scales with screen height.", new AcceptableValueRange<float>(0.5f, 2f)));
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
@@ -77,7 +79,8 @@ namespace PeakMorePlayers
         {
             if (!_open) return;
             GUI.depth = 1;
-            float s = Ui.Scale;
+            Ui.UserScale = UiScale.Value;
+            float s = Ui.ScaleFor(340f, 360f);
             var prevMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
             _window = GUILayout.Window(0x9EA7, _window, Draw, GUIContent.none, Ui.WindowStyle, GUILayout.Width(340));
@@ -115,6 +118,10 @@ namespace PeakMorePlayers
                 if (!host) Ui.Hint("Only the host can change the current room.");
             }
             else Ui.Hint("Not in a room. The cap applies when you host one.");
+            Ui.EndCard();
+
+            Ui.BeginCard();
+            UiScale.Value = Mathf.Round(Ui.Slider("UI size", UiScale.Value, 0.5f, 2f, "0.0x") * 10f) / 10f;
             Ui.EndCard();
 
             GUI.DragWindow(new Rect(0, 0, 10000, 40));

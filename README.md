@@ -11,7 +11,7 @@ Large lobbies are not fully handled yet: end screen, kiosk, campfire marshmallow
 
 ## PEAK Host Menu (`PeakHostMenu`)
 
-In-game window, toggled with **F3** (rebindable in `BepInEx/config/au.leybourne.peakhostmenu.cfg`). Eight tabs:
+In-game window (scales to your resolution, with a UI size slider), toggled with **F3** (rebindable in `BepInEx/config/au.leybourne.peakhostmenu.cfg`). Eight tabs:
 
 - **Lobby:** apply a player cap to the current room, lock or unlock joins, player ESP, coordinates overlay.
 - **Me:** god mode, infinite stamina, no afflictions, no fall damage, no carry weight, no ragdoll, unlimited item uses, per-status immunity, fly (F4, WASD + Space/Left Ctrl), speed, jump, climb, vine and rope speed, heal, revive, die. Every switch can have its own hotkey, rebindable in the menu. Settings are remembered.
