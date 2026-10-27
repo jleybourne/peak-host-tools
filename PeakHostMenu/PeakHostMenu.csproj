@@ -34,6 +34,7 @@
 
     <ItemGroup>
         <Compile Include="../Shared/Ui.cs" Link="Shared/Ui.cs" />
+        <Compile Include="../Shared/InputBlock.cs" Link="Shared/InputBlock.cs" />
     </ItemGroup>
 
     <Target Name="Deploy" AfterTargets="Build" Condition="Exists('$(GameDir)BepInEx\plugins')">

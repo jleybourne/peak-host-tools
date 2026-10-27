@@ -72,6 +72,7 @@ namespace PeakHostMenu
         {
             if (open == _open) return;
             _open = open;
+            InputBlock.Open = open;
             if (open)
             {
                 _prevLock = Cursor.lockState;
