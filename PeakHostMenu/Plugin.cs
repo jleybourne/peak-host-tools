@@ -13,7 +13,7 @@ namespace PeakHostMenu
         public const string Guid = "au.leybourne.peakhostmenu";
         public const string Name = "PEAK Host Menu @jleybourne";
         public const string Author = "@jleybourne";
-        public const string Version = "0.4.0";
+        public const string Version = "0.5.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -44,6 +44,9 @@ namespace PeakHostMenu
         internal ConfigEntry<bool> ShowCoords;
         internal ConfigEntry<bool> LuggageEsp;
         internal ConfigEntry<float> UiScale;
+        internal ConfigEntry<bool> AutoRevive, AutoHeal, Hud, Radar;
+        internal ConfigEntry<float> AutoReviveDelay, AutoHealInterval;
+        internal ConfigEntry<string> Profiles;
 
         // One immunity switch per status, so you can be immune to cold but still get hungry.
         internal readonly Dictionary<CharacterAfflictions.STATUSTYPE, ConfigEntry<bool>> Immune =
@@ -86,6 +89,13 @@ namespace PeakHostMenu
             Esp = Switch("PlayerEsp", "Player ESP", "Draw names and distance over every player.");
             LuggageEsp = Switch("LuggageEsp", "Luggage ESP", "Draw luggage through walls.");
             ShowCoords = Switch("ShowCoords", "Coordinates overlay", "Show your position on screen.");
+            Hud = Switch("Hud", "Altitude and timer HUD", "Show altitude, progress and run time at the top of the screen.");
+            Radar = Switch("Radar", "Teammate radar", "Arrows toward teammates and the next campfire.");
+            AutoRevive = Switch("AutoRevive", "Auto-revive (host)", "Revive anyone who has been dead for a while.");
+            AutoHeal = Switch("AutoHeal", "Auto-heal (host)", "Clear everyone's afflictions on a timer.");
+            AutoReviveDelay = Config.Bind("Co-op", "AutoReviveDelaySeconds", 15f, new ConfigDescription("Seconds dead before auto-revive.", new AcceptableValueRange<float>(3f, 120f)));
+            AutoHealInterval = Config.Bind("Co-op", "AutoHealIntervalSeconds", 10f, new ConfigDescription("Seconds between auto-heals.", new AcceptableValueRange<float>(2f, 120f)));
+            Profiles = Config.Bind("Profiles", "Saved", "", "Saved toggle presets (managed by the menu).");
             Fly = Switch("Fly", "Fly", "WASD plus Space and Left Ctrl to fly.");
             FlySpeed = Config.Bind("Toggles", "FlySpeed", 12f, new ConfigDescription("Fly speed.", new AcceptableValueRange<float>(2f, 60f)));
             // The fly hotkey predates the generic ones, so it keeps its own entry and defaults to F4.
@@ -98,6 +108,7 @@ namespace PeakHostMenu
             _harmony.PatchAll();
 
             gameObject.AddComponent<Features>();
+            gameObject.AddComponent<Extras>();
             gameObject.AddComponent<HostMenu>();
 
             Log.LogInfo($"{Name} {Version} loaded");

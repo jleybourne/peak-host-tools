@@ -218,8 +218,17 @@ namespace PeakHostMenu
 
         // ---- Character actions ---------------------------------------------------------------
 
+        // Where you were before your last warp, for the Undo button.
+        internal static Vector3? PreviousPosition;
+
+        internal static void UndoWarp()
+        {
+            if (Me != null && PreviousPosition.HasValue) { var back = PreviousPosition.Value; Warp(Me, back); }
+        }
+
         internal static void Warp(Character c, Vector3 pos)
         {
+            if (c != null && c == Me) PreviousPosition = c.Center;
             Safe("warp", () =>
             {
                 if (c.photonView.IsMine) Traverse.Create(c).Method("WarpPlayer", new object[] { pos, true }).GetValue();
@@ -239,14 +248,17 @@ namespace PeakHostMenu
             Warp(Me, c.Center + Vector3.up * 1f);
         }
 
-        internal static void Revive(Character c)
+        internal static void Revive(Character c) => Revive(c, null);
+
+        // Revives next to `near` when given, otherwise next to the host.
+        internal static void Revive(Character c, Vector3? near)
         {
             Safe("revive", () =>
             {
                 if (c.photonView.IsMine) Traverse.Create(c).Method("ReviveCharacter", new object[] { true }).GetValue();
                 else
                 {
-                    Vector3 spot = SafePosition((Me ?? c).Center);
+                    Vector3 spot = SafePosition(near ?? (Me ?? c).Center);
                     c.photonView.RPC("RPCA_ReviveAtPosition", RpcTarget.All, spot, true, -1);
                 }
             });

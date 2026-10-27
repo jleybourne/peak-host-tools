@@ -38,6 +38,10 @@ namespace PeakHostMenu
         private string _tpX = "0", _tpY = "0", _tpZ = "0";
         private float _timeDraft = 12f, _fogDraft = 0f, _gravity = -9.81f, _speed = 1f, _timer = 60f, _luggageRadius = 300f;
         private Plugin.Toggle _rebindTarget;
+        private float _morale = 0.5f, _balloons = 3f, _lava;
+        private int _emoteIdx;
+        private Character _carried;
+        private string _profileName = "";
 
         private CursorLockMode _prevLock;
         private bool _prevVisible;
@@ -97,6 +101,8 @@ namespace PeakHostMenu
         {
             if (Plugin.Instance.Esp.Value) DrawPlayerEsp();
             if (Plugin.Instance.LuggageEsp.Value) DrawLuggageEsp();
+            if (Plugin.Instance.Hud.Value) Extras.DrawHud();
+            if (Plugin.Instance.Radar.Value) Extras.DrawRadar();
             if (Plugin.Instance.ShowCoords.Value && Features.Me != null)
             {
                 var p = Features.Me.Center;
@@ -231,6 +237,8 @@ namespace PeakHostMenu
             Ui.BeginCard();
             Plugin.Instance.Esp.Value = Ui.Switch("Player ESP (names and distance)", Plugin.Instance.Esp.Value);
             Plugin.Instance.ShowCoords.Value = Ui.Switch("Coordinates overlay", Plugin.Instance.ShowCoords.Value);
+            Plugin.Instance.Hud.Value = Ui.Switch("Altitude and timer HUD", Plugin.Instance.Hud.Value);
+            Plugin.Instance.Radar.Value = Ui.Switch("Teammate radar", Plugin.Instance.Radar.Value);
             Plugin.Instance.UiScale.Value = Mathf.Round(Ui.Slider("UI size", Plugin.Instance.UiScale.Value, 0.5f, 2f, "0.0x") * 10f) / 10f;
             Ui.Hint("Scales with your screen automatically. This is an extra multiplier.");
             Ui.EndCard();
@@ -282,6 +290,25 @@ namespace PeakHostMenu
             if (me == null) Ui.Hint("Actions need a character. Start or join a run first.");
             Ui.EndCard();
 
+            Ui.Heading("Profiles");
+            Ui.BeginCard();
+            Ui.Hint("Save the switches you have on as a preset, then load it with one click.");
+            GUILayout.BeginHorizontal();
+            _profileName = GUILayout.TextField(_profileName, Ui.Field, GUILayout.Height(26));
+            if (Ui.Button("Save", Ui.Kind.Accent, true, 70)) { Extras.SaveProfile(_profileName); _profileName = ""; }
+            GUILayout.EndHorizontal();
+            foreach (var kv in Extras.LoadProfiles().ToList())
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(kv.Key, Ui.Title);
+                GUILayout.Label($"{kv.Value.Count} on", Ui.Muted_);
+                GUILayout.FlexibleSpace();
+                if (Ui.Button("Load", width: 70)) Extras.LoadProfile(kv.Key);
+                if (Ui.Button("Delete", Ui.Kind.Danger, true, 70)) Extras.DeleteProfile(kv.Key);
+                GUILayout.EndHorizontal();
+            }
+            Ui.EndCard();
+
             Ui.Heading("Hotkeys");
             Ui.BeginCard();
             Ui.Hint(Rebinding ? "Press a key for the highlighted switch. Esc clears it." : "Click a key to rebind it. None means no hotkey.");
@@ -312,6 +339,16 @@ namespace PeakHostMenu
             Row(Btn("Bring all to me", () => Features.ForAll(Features.BringToMe)),
                 Btn("Revive all", () => Features.ForAll(Features.Revive, true)),
                 Btn("Heal all", () => Features.ForAll(Features.Heal, true)));
+            Ui.EndCard();
+
+            Ui.Heading("Co-op helpers");
+            Ui.BeginCard();
+            Plugin.Instance.AutoRevive.Value = Ui.Switch("Auto-revive dead players (host)", Plugin.Instance.AutoRevive.Value);
+            Plugin.Instance.AutoReviveDelay.Value = Mathf.Round(Ui.Slider("Revive after", Plugin.Instance.AutoReviveDelay.Value, 3f, 120f, "0s"));
+            Plugin.Instance.AutoHeal.Value = Ui.Switch("Auto-heal and feed everyone (host)", Plugin.Instance.AutoHeal.Value);
+            Plugin.Instance.AutoHealInterval.Value = Mathf.Round(Ui.Slider("Heal every", Plugin.Instance.AutoHealInterval.Value, 2f, 120f, "0s"));
+            _morale = Ui.Slider("Morale boost", _morale, 0.1f, 1f, "0.00");
+            Row(Btn("Boost everyone's stamina", () => Extras.MoraleBoost(_morale), Ui.Kind.Accent, Features.IsHost));
             Ui.EndCard();
 
             Ui.Heading("Status tool");
@@ -391,6 +428,54 @@ namespace PeakHostMenu
             Ui.Hint("Fling strength is a guess. Raise it if nothing happens.");
             Ui.EndCard();
 
+            Ui.Heading("Transform");
+            Ui.BeginCard();
+            Row(PerTarget("Make skeleton", c => Extras.Skeleton(c, true)), PerTarget("Undo skeleton", c => Extras.Skeleton(c, false)),
+                PerTarget("Zombify", Extras.Zombify, Ui.Kind.Danger));
+            Ui.EndCard();
+
+            Ui.Heading("Launch and float");
+            Ui.BeginCard();
+            Row(PerTarget("Rocket", Extras.Rocket), PerTarget("Rocket explode", Extras.RocketExplode, Ui.Kind.Danger), PerTarget("Jetpack fuel", Extras.Jetpack));
+            _balloons = Mathf.Round(Ui.Slider("Balloons", _balloons, 1f, 10f, "0"));
+            Row(PerTarget("Tie balloons", c => Extras.Balloons(c, (int)_balloons)), PerTarget("Open parachute", c => Extras.Parachute(c, true)),
+                PerTarget("Close parachute", c => Extras.Parachute(c, false)));
+            Row(PerTarget("Fire from scout cannon", Extras.CannonLaunch));
+            if (!Extras.HasCannon()) Ui.Hint("There's no scout cannon in this level.");
+            Ui.EndCard();
+
+            Ui.Heading("Emote");
+            Ui.BeginCard();
+            var emotes = Extras.Emotes();
+            if (emotes.Count == 0) Ui.Hint("No emotes loaded yet.");
+            else
+            {
+                _emoteIdx = Mathf.Clamp(_emoteIdx, 0, emotes.Count - 1);
+                GUILayout.BeginHorizontal();
+                if (Ui.Button("<", width: 30)) _emoteIdx = (_emoteIdx + emotes.Count - 1) % emotes.Count;
+                GUILayout.Label(emotes[_emoteIdx].emoteName, Ui.Title);
+                GUILayout.FlexibleSpace();
+                if (Ui.Button(">", width: 30)) _emoteIdx = (_emoteIdx + 1) % emotes.Count;
+                GUILayout.EndHorizontal();
+                Row(PerTarget("Play emote", c => Extras.Emote(c, emotes[_emoteIdx]), Ui.Kind.Accent));
+            }
+            Ui.EndCard();
+
+            Ui.Heading("Carry");
+            Ui.BeginCard();
+            var all = Features.Players.ToList();
+            if (all.Count < 2) Ui.Hint("Needs two players.");
+            else
+            {
+                if (_carried == null || !all.Contains(_carried) || _carried == _funTarget) _carried = all.FirstOrDefault(p => p != _funTarget);
+                Ui.Hint("The target above carries the player picked here.");
+                GUILayout.BeginHorizontal();
+                foreach (var p in all) if (Ui.Tab(Features.NameOf(p), _carried == p)) _carried = p;
+                GUILayout.EndHorizontal();
+                Row(Btn("Start carrying", () => Extras.Carry(_funTarget, _carried), Ui.Kind.Accent), Btn("Drop", () => Extras.Drop(_funTarget, _carried)));
+            }
+            Ui.EndCard();
+
             Ui.Heading("Trouble");
             Ui.BeginCard();
             Row(PerTarget("Eruption (volcano areas only)", HostActions.Eruption, Ui.Kind.Danger),
@@ -431,6 +516,7 @@ namespace PeakHostMenu
             Row(Btn("Teleport me", () => HostActions.ToCrosshair(Features.Me), Ui.Kind.Accent),
                 Btn("Everyone else", () => Features.ForAll(HostActions.ToCrosshair)));
             Row(Btn("To a random player", HostActions.ToRandomPlayer));
+            Row(Btn("Undo last teleport", Features.UndoWarp, enabled: Features.PreviousPosition.HasValue));
             Ui.EndCard();
 
             Ui.Heading("Swap players");
@@ -553,6 +639,27 @@ namespace PeakHostMenu
                 Btn("Spin all", HostActions.SpinItems));
             Row(Btn("Cook all", HostActions.CookItems), Btn("Deny pickups", HostActions.DenyPickups),
                 Btn("Clear all", HostActions.ClearItems, Ui.Kind.Danger, Features.IsHost));
+            Ui.EndCard();
+
+            Ui.Heading("Enemies");
+            Ui.BeginCard();
+            Row(Btn("Clear all enemies", Extras.ClearEnemies, Ui.Kind.Danger, Features.IsHost));
+            Ui.EndCard();
+
+            Ui.Heading("Lava");
+            Ui.BeginCard();
+            if (!Extras.HasLava()) Ui.Hint("There's no rising lava in this level.");
+            else
+            {
+                Row(Btn("Start the rise", Extras.StartLava, enabled: Features.IsHost));
+                _lava = Ui.Slider("Lava height", _lava == 0f ? Extras.LavaHeight() : _lava, Extras.LavaHeight() - 200f, Extras.LavaHeight() + 600f, "0");
+                Row(Btn("Set lava height", () => Extras.SetLavaHeight(_lava), enabled: Features.IsHost));
+            }
+            Ui.EndCard();
+
+            Ui.Heading("Campfire anywhere");
+            Ui.BeginCard();
+            Row(Btn("Spawn stove and firewood where I look", Extras.CampfireKit, Ui.Kind.Accent, Features.IsHost));
             Ui.EndCard();
 
             Ui.Heading("Game state");

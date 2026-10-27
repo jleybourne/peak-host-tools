@@ -13,12 +13,12 @@ Large lobbies are not fully handled yet: end screen, kiosk, campfire marshmallow
 
 In-game window (scales to your resolution, with a UI size slider), toggled with **F3** (rebindable in `BepInEx/config/au.leybourne.peakhostmenu.cfg`). Eight tabs:
 
-- **Lobby:** apply a player cap to the current room, lock or unlock joins, player ESP, coordinates overlay.
-- **Me:** god mode, infinite stamina, no afflictions, no fall damage, no carry weight, no ragdoll, unlimited item uses, per-status immunity, fly (F4, WASD + Space/Left Ctrl), speed, jump, climb, vine and rope speed, heal, revive, die. Every switch can have its own hotkey, rebindable in the menu. Settings are remembered.
-- **Players:** go to, bring, revive, heal, make host, kick, stamina and affliction bars, give any status, spawn the Scoutmaster, plus bring, revive, heal and status for everyone.
-- **Fun:** freeze, make fall or jump, pass out, wake, stop climbing, fling, eruption, coconut on head, banana peel, beehive, dynamite. Pick one player or everyone.
-- **Teleport:** type-in coordinates, to where you look, random player, swap two players, three waypoints, biomes, teleport to ping, campfires.
-- **World:** time of day, fog, wind, gravity and game speed (this computer only), light or put out campfires, luggage ESP and open nearby or all, freeze, spin, cook or clear loose items, force win, peak timer, call the helicopter.
+- **Lobby:** apply a player cap to the current room, lock or unlock joins, player ESP, coordinates overlay, an altitude and run-timer HUD, and a teammate radar with arrows to each player and the next campfire.
+- **Me:** god mode, infinite stamina, no afflictions, no fall damage, no carry weight, no ragdoll, unlimited item uses, per-status immunity, fly (F4, WASD + Space/Left Ctrl), speed, jump, climb, vine and rope speed, heal, revive, die. Every switch can have its own hotkey, rebindable in the menu. Settings are remembered, and you can save the switches you have on as named profiles.
+- **Players:** go to, bring, revive, heal, make host, kick, stamina and affliction bars, give any status, spawn the Scoutmaster, bring/revive/heal/status for everyone, plus co-op helpers: auto-revive, auto-heal and feed, and a morale boost for everyone.
+- **Fun:** freeze, fall, jump, pass out, wake, stop climbing, fling, eruption, coconut, banana peel, beehive, dynamite, skeleton or zombie, rocket and jetpack, balloons and parachute, scout cannon launch, emotes, and making one player carry another. Pick one player or everyone.
+- **Teleport:** type-in coordinates, to where you look, random player, swap two players, undo last teleport, three waypoints, biomes, teleport to ping, campfires.
+- **World:** time of day, fog, wind, gravity and game speed (this computer only), campfires, luggage ESP, loose-item tools, clear all enemies, lava control, a stove and firewood anywhere, force win, peak timer, helicopter.
 - **Items:** your three inventory slots (recharge, remove), then a filterable list of every item to spawn at a player, where you look, or into a hand.
 - **Mods:** every loaded BepInEx mod with its version and hotkeys, read from each mod's config.
 
