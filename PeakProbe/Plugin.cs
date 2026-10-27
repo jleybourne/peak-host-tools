@@ -46,6 +46,7 @@ namespace PeakProbe
 
         internal static void Rpc(string line)
         {
+            foreach (var n in Noise) if (line.Contains(n)) return;
             try { File.AppendAllText(_rpcLog, $"[{Time.realtimeSinceStartup:0.00}] {line}\n"); } catch { }
         }
 
