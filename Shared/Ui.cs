@@ -9,12 +9,12 @@ namespace PeakShared
         internal static readonly Color Good = new Color32(0x3D, 0xDC, 0x97, 255);
         internal static readonly Color Bad = new Color32(0xF0, 0x5D, 0x5E, 255);
         internal static readonly Color Text = new Color32(0xE8, 0xEA, 0xED, 255);
-        internal static readonly Color Muted = new Color32(0x8B, 0x92, 0x9C, 255);
+        internal static readonly Color Muted = new Color32(0xA3, 0xAA, 0xB4, 255);
         private static readonly Color WindowBg = new Color32(0x14, 0x17, 0x1C, 245);
-        private static readonly Color CardBg = new Color32(0x1E, 0x23, 0x2B, 255);
-        private static readonly Color Control = new Color32(0x2A, 0x31, 0x3B, 255);
-        private static readonly Color ControlHover = new Color32(0x37, 0x40, 0x4D, 255);
-        private static readonly Color Track = new Color32(0x33, 0x3A, 0x45, 255);
+        private static readonly Color CardBg = new Color32(0x26, 0x2C, 0x36, 255);
+        private static readonly Color Control = new Color32(0x36, 0x3E, 0x4B, 255);
+        private static readonly Color ControlHover = new Color32(0x45, 0x4F, 0x5F, 255);
+        private static readonly Color Track = new Color32(0x4A, 0x53, 0x61, 255);
 
         // The game renders IMGUI in linear colour space, which washes colours out unless they are converted.
         internal static Color G(Color c) => QualitySettings.activeColorSpace == ColorSpace.Linear ? new Color(Mathf.GammaToLinearSpace(c.r), Mathf.GammaToLinearSpace(c.g), Mathf.GammaToLinearSpace(c.b), c.a) : c;
@@ -32,7 +32,7 @@ namespace PeakShared
         }
 
         private static bool _ready;
-        private static GUIStyle _window, _card, _round, _label, _muted, _title, _btnText, _field;
+        private static GUIStyle _window, _card, _label, _muted, _title, _btnText, _field;
         private static GUIStyle _btnDraw;
 
         internal static GUIStyle WindowStyle { get { Init(); return _window; } }
@@ -75,30 +75,37 @@ namespace PeakShared
             _window = Box(WindowBg, 10, 12);
             _window.margin = new RectOffset(0, 0, 0, 0);
             _card = Box(CardBg, 8, 10);
-            _round = Box(Color.white, 6, 0);
             _field = Box(Track, 5, 6);
-            _field.normal.textColor = G(Text);
-            _field.focused.textColor = G(Text);
+            _field.normal.textColor = Text;
+            _field.focused.textColor = Text;
             _field.fontSize = 13;
             _field.alignment = TextAnchor.MiddleLeft;
             _field.clipping = TextClipping.Clip;
 
             _label = new GUIStyle { fontSize = 13, wordWrap = true, alignment = TextAnchor.MiddleLeft };
-            _label.normal.textColor = G(Text);
+            _label.normal.textColor = Text;
             _muted = new GUIStyle(_label) { fontSize = 12 };
-            _muted.normal.textColor = G(Muted);
+            _muted.normal.textColor = Muted;
             _title = new GUIStyle(_label) { fontSize = 15, fontStyle = FontStyle.Bold };
             _btnText = new GUIStyle(_label) { alignment = TextAnchor.MiddleCenter, wordWrap = false, clipping = TextClipping.Clip };
             _btnDraw = new GUIStyle(_btnText);
             _ready = true;
         }
 
+        // Shapes are baked into small rounded textures (cached per colour) so they go through the same colour
+        // path as the window and cards. Tinting a white texture with GUI.color came out too dark in this game.
+        private static readonly System.Collections.Generic.Dictionary<Color32, GUIStyle> _fills =
+            new System.Collections.Generic.Dictionary<Color32, GUIStyle>();
+
         private static void Fill(Rect r, Color c)
         {
-            var prev = GUI.color;
-            GUI.color = prev * G(c);
-            _round.Draw(r, false, false, false, false);
-            GUI.color = prev;
+            var key = (Color32)c;
+            if (!_fills.TryGetValue(key, out var st) || st.normal.background == null)
+            {
+                st = Box(c, 6, 0);
+                _fills[key] = st;
+            }
+            st.Draw(r, false, false, false, false);
         }
 
         private static bool Hover(Rect r) => r.Contains(Event.current.mousePosition);
@@ -116,7 +123,7 @@ namespace PeakShared
             Init();
             GUILayout.Space(4);
             var s = new GUIStyle(_muted) { fontStyle = FontStyle.Bold };
-            s.normal.textColor = G(Accent);
+            s.normal.textColor = Accent;
             GUILayout.Label(text.ToUpperInvariant(), s);
         }
 
@@ -130,7 +137,7 @@ namespace PeakShared
             {
                 Fill(r, selected ? Accent : Hover(r) ? ControlHover : Control);
                 var st = new GUIStyle(_btnText) { fontStyle = selected ? FontStyle.Bold : FontStyle.Normal };
-                st.normal.textColor = G(selected ? new Color32(0x14, 0x17, 0x1C, 255) : Text);
+                st.normal.textColor = selected ? new Color32(0x14, 0x17, 0x1C, 255) : Text;
                 st.Draw(r, text, false, false, false, false);
             }
             return GUI.Button(r, GUIContent.none, GUIStyle.none);
@@ -150,7 +157,7 @@ namespace PeakShared
                 if (!enabled) bg = Color.Lerp(bg, WindowBg, 0.55f);
                 Fill(r, bg);
                 var st = _btnDraw;
-                st.normal.textColor = G(!enabled ? Muted : kind == Kind.Normal ? Text : new Color32(0x14, 0x17, 0x1C, 255));
+                st.normal.textColor = !enabled ? Muted : kind == Kind.Normal ? Text : new Color32(0x14, 0x17, 0x1C, 255);
                 st.Draw(r, text, false, false, false, false);
             }
             return enabled && GUI.Button(r, GUIContent.none, GUIStyle.none);
@@ -178,7 +185,7 @@ namespace PeakShared
             GUILayout.Label(text, _label);
             GUILayout.FlexibleSpace();
             var right = new GUIStyle(_label) { alignment = TextAnchor.MiddleRight, fixedWidth = 60 };
-            right.normal.textColor = G(Accent);
+            right.normal.textColor = Accent;
             GUILayout.Label(value.ToString(fmt), right);
             GUILayout.EndHorizontal();
 
@@ -232,7 +239,7 @@ namespace PeakShared
             if (Event.current.type == EventType.Repaint)
             {
                 Fill(r, new Color(color.r, color.g, color.b, 0.22f));
-                st.normal.textColor = G(color);
+                st.normal.textColor = color;
                 st.Draw(r, text, false, false, false, false);
             }
         }
