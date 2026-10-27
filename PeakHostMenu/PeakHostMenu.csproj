@@ -32,6 +32,10 @@
         <Reference Include="$(ManagedDir)Photon3Unity3D.dll" Private="false" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Compile Include="../Shared/Ui.cs" Link="Shared/Ui.cs" />
+    </ItemGroup>
+
     <Target Name="Deploy" AfterTargets="Build" Condition="Exists('$(GameDir)BepInEx\plugins')">
         <Copy SourceFiles="$(OutputPath)PeakHostMenu.dll" DestinationFolder="$(GameDir)BepInEx\plugins\PeakHostMenu\" />
     </Target>

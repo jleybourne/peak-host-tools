@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace PeakHostMenu
+namespace PeakShared
 {
     // Small immediate-mode widget kit: dark flat theme, rounded corners, accent colour.
     internal static class Ui

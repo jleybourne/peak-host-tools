@@ -15,7 +15,7 @@ using UnityEngine.InputSystem;
 namespace PeakProbe
 {
     // Read-only diagnostics. Logs every RPC the game sends, and writes a dump of game internals on F6.
-    [BepInPlugin("au.leybourne.peakprobe", "PEAK Probe", "0.1.0")]
+    [BepInPlugin("au.leybourne.peakprobe", "PEAK Probe @jleybourne", "0.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         internal static ManualLogSource Log;

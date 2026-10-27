@@ -22,9 +22,16 @@
         <Reference Include="$(ManagedDir)Assembly-CSharp.dll" Private="false" />
         <Reference Include="$(ManagedDir)UnityEngine.dll" Private="false" />
         <Reference Include="$(ManagedDir)UnityEngine.CoreModule.dll" Private="false" />
+        <Reference Include="$(ManagedDir)Unity.InputSystem.dll" Private="false" />
+        <Reference Include="$(ManagedDir)UnityEngine.TextRenderingModule.dll" Private="false" />
+        <Reference Include="$(ManagedDir)UnityEngine.IMGUIModule.dll" Private="false" />
         <Reference Include="$(ManagedDir)PhotonUnityNetworking.dll" Private="false" />
         <Reference Include="$(ManagedDir)PhotonRealtime.dll" Private="false" />
         <Reference Include="$(ManagedDir)Photon3Unity3D.dll" Private="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="../Shared/Ui.cs" Link="Shared/Ui.cs" />
     </ItemGroup>
 
     <Target Name="Deploy" AfterTargets="Build" Condition="Exists('$(GameDir)BepInEx\plugins')">

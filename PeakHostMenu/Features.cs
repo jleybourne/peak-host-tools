@@ -22,6 +22,9 @@ namespace PeakHostMenu
         private float _baseJump = -1f;
         private float _nextClear;
         private bool _godWasOn;
+        private float _baseClimb = -1f, _baseVine, _baseRope;
+        private float _nextImmune;
+        internal float ClimbMultiplier = 1f, VineMultiplier = 1f, RopeMultiplier = 1f;
 
         private void Awake() => Instance = this;
 
@@ -40,7 +43,9 @@ namespace PeakHostMenu
         {
             var kb = Keyboard.current;
             var cfg = Plugin.Instance;
-            if (kb != null && kb[cfg.FlyKey.Value].wasPressedThisFrame) cfg.Fly.Value = !cfg.Fly.Value;
+            if (kb != null && !HostMenu.Rebinding)
+                foreach (var t in cfg.Toggles)
+                    if (t.Hotkey.Value != Key.None && kb[t.Hotkey.Value].wasPressedThisFrame) t.Value.Value = !t.Value.Value;
 
             var me = Me;
             if (me == null) return;
@@ -69,6 +74,29 @@ namespace PeakHostMenu
                 mv.movementModifier = _baseMove * SpeedMultiplier;
                 mv.jumpImpulse = _baseJump * JumpMultiplier;
             });
+
+            Safe("climb speed", () =>
+            {
+                if (_baseClimb < 0f)
+                {
+                    _baseClimb = me.refs.climbing.climbSpeedMod;
+                    _baseVine = me.refs.vineClimbing.climbSpeedMod;
+                    _baseRope = me.refs.ropeHandling.climbSpeedMod;
+                }
+                me.refs.climbing.climbSpeedMod = _baseClimb * ClimbMultiplier;
+                me.refs.vineClimbing.climbSpeedMod = _baseVine * VineMultiplier;
+                me.refs.ropeHandling.climbSpeedMod = _baseRope * RopeMultiplier;
+            });
+
+            if (Time.time >= _nextImmune)
+            {
+                _nextImmune = Time.time + 0.25f;
+                Safe("immunity", () =>
+                {
+                    foreach (var kv in cfg.Immune)
+                        if (kv.Value.Value) me.refs.afflictions.SetStatus(kv.Key, 0f);
+                });
+            }
 
             if (cfg.Fly.Value) Safe("fly", () => DoFly(me, kb));
         }
