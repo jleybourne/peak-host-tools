@@ -2,6 +2,16 @@
 
 Three small BepInEx 5 mods for [PEAK](https://store.steampowered.com/app/3527290/PEAK/). They are independent: install any of them. Only the host needs them.
 
+## Install
+
+1. Install [BepInEx 5](https://github.com/BepInEx/BepInEx/releases) (the `win_x64` 5.4.x zip) by extracting it into your PEAK folder, next to `PEAK.exe`. Start the game once so BepInEx sets itself up.
+2. Download a zip from the [latest release](https://github.com/jleybourne/peak-host-tools/releases/latest) and extract it into the same PEAK folder. Each zip holds `BepInEx/plugins/<mod>/<mod>.dll`, so the files land in the right place.
+3. Start PEAK. Press **F2** for the player cap window and **F3** for the host menu.
+
+`PEAK-host-tools-<version>.zip` has the cap mod and the host menu together. PEAK Probe is a separate download because it is only useful for working on the mods.
+
+These are unofficial mods. Aggro Crab doesn't support them, so use them at your own risk, and use the host menu in lobbies where everyone is fine with it.
+
 ## PEAK More Players (`PeakMorePlayers`)
 
 Raises the lobby cap past 4. Press **F2** for a small window with a slider (1 to 30), a Save button, and an "Apply to current room" button for the host. The cap is also stored in `BepInEx/config/au.leybourne.peakmoreplayers.cfg` (default 8).
